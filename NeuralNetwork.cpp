@@ -114,6 +114,10 @@ bool NeuralNetwork::contribute(double y, double p) {
     // The contributions map acts as your "visited" set and also stores each node's
     // computed contribution so it is not recomputed if reached by multiple paths.
 
+    contributions.clear();
+    for (int inputId : inputNodeIds) {
+        contribute(inputId, y, p);
+    }
 
     flush();
 
@@ -130,34 +134,44 @@ double NeuralNetwork::contribute(int nodeId, const double& y, const double& p) {
     NodeInfo* currNode = nodes.at(nodeId);
 
     // If this node is already in the contributions map, return its stored value immediately.
+    if (contributions.count(nodeId)) {
+        return contributions.at(nodeId);
+    }
 
     if (adjacencyList.at(nodeId).empty()) {
         // Base case: output node (no outgoing connections).
         // Seeds the backward pass with the initial error signal.
         // You do not need to understand this derivation.
         outgoingContribution = -1 * ((y - p) / (p * (1 - p)));
+    } else {
+        for (auto& [neighborId, connection] : adjacencyList.at(nodeId)) {
+            incomingContribution = contribute(neighborId, y, p);
+            visitContributeNeighbor(connection, incomingContribution, outgoingContribution);
+        }
     }
-
-    // Before returning, store outgoingContribution in the contributions map.
-
+    bool isInputNode = std::find(inputNodeIds.begin(), inputNodeIds.end(), nodeId) != inputNodeIds.end();
+    if (!isInputNode) {
+        visitContributeNode(nodeId, outgoingContribution);
+    }
+    contributions[nodeId] = outgoingContribution;
     return outgoingContribution;
 }
 // STUDENT TODO: IMPLEMENT
 bool NeuralNetwork::update() {
     // apply the derivative contributions
 
-    // traverse the graph in anyway you want. 
-    // Each node has a delta term 
+    // traverse the graph in anyway you want.
+    // Each node has a delta term
     // Each connection has a delta term
 
     // use the formulas for each update
     // bias update: bias = bias - (learningRate * delta)
     // weight update: weight = weight - (learningRate * delta)
     // reset the delta term for each node and connection to zero.
-    
+
     flush();
     return true;
-    
+
 }
 
 
