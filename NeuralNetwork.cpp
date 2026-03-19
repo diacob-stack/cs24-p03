@@ -149,7 +149,12 @@ double NeuralNetwork::contribute(int nodeId, const double& y, const double& p) {
             visitContributeNeighbor(connection, incomingContribution, outgoingContribution);
         }
     }
-    bool isInputNode = std::find(inputNodeIds.begin(), inputNodeIds.end(), nodeId) != inputNodeIds.end();
+    bool isInputNode = false;
+    for (int id : inputNodeIds) {
+        if (id == nodeId) {
+            isInputNode = true; break;
+        }
+    }
     if (!isInputNode) {
         visitContributeNode(nodeId, outgoingContribution);
     }
@@ -169,6 +174,14 @@ bool NeuralNetwork::update() {
     // weight update: weight = weight - (learningRate * delta)
     // reset the delta term for each node and connection to zero.
 
+    for (int i = 0; i < (int)nodes.size(); i++) {
+        nodes.at(i)->bias -= learningRate * nodes.at(i)->delta;
+        nodes.at(i)->delta = 0;
+        for (auto& [neighborId, connection] : adjacencyList.at(i)) {
+            connection.weight -= learningRate * connection.delta;
+            connection.delta = 0;
+        }
+    }
     flush();
     return true;
 
