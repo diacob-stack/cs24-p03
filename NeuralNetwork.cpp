@@ -61,6 +61,30 @@ vector<double> NeuralNetwork::predict(DataInstance instance) {
     // their value is passed forward directly.
     // Use visitPredictNode and visitPredictNeighbor to handle the neural network math
     // at each step of your traversal.
+    set<int> inputSet(inputNodeIds.begin(), inputNodeIds.end());
+    queue<int> q;
+    set<int> enqueued;
+
+    for (int i = 0; i < (int)inputNodeIds.size(); i++) {
+        nodes.at(inputNodeIds[i])->postActivationValue = input[i];
+        q.push(inputNodeIds[i]);
+        enqueued.insert(inputNodeIds[i]);
+    }
+
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        if (!inputSet.count(v)) {
+            visitPredictNode(v);
+        }
+        for (auto& [u, c] : adjacencyList[v]) {
+            visitPredictNeighbor(c);
+            if (!enqueued.count(u)) {
+                enqueued.insert(u);
+                q.push(u);
+            }
+        }
+    }
 
     vector<double> output;
     for (int i = 0; i < outputNodeIds.size(); i++) {
